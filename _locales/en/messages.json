@@ -11,6 +11,7 @@
   "fontSizeLabel":  { "message": "Clock size" },
   "fontAutoFit":    { "message": "Auto-fit to panel width" },
   "overlayWidthLabel": { "message": "Panel width" },
+  "sectionSite":    { "message": "Show on this site" },
   "sectionWeather": { "message": "Weather" },
   "weatherShow":    { "message": "Show weather" },
   "unitLabel":      { "message": "Temperature" },

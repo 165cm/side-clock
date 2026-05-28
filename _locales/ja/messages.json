@@ -11,6 +11,7 @@
   "fontSizeLabel":  { "message": "時刻の大きさ" },
   "fontAutoFit":    { "message": "幅に合わせて自動調整" },
   "overlayWidthLabel": { "message": "パネル幅" },
+  "sectionSite":    { "message": "このサイトで表示" },
   "sectionWeather": { "message": "天気" },
   "weatherShow":    { "message": "天気を表示" },
   "unitLabel":      { "message": "温度単位" },

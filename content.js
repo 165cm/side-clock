@@ -2,16 +2,17 @@
   'use strict';
 
   const DEFAULT_SETTINGS = {
-    mode:         'always',
-    position:     'top-right',
-    weather:      true,
-    unit:         'C',
-    hour12:       false,
-    enabled:      true,
-    autoFit:      true,
-    overlayWidth: 260,
-    customLeft:   -1,
-    customTop:    -1
+    mode:          'always',
+    position:      'top-right',
+    weather:       false,  // off by default — avoids geolocation prompt on first install
+    unit:          'C',
+    hour12:        false,
+    enabled:       true,
+    autoFit:       true,
+    overlayWidth:  260,
+    customLeft:    -1,
+    customTop:     -1,
+    siteBlocklist: []      // hostnames where the overlay is hidden
   };
 
   const POSITION_MAP = {
@@ -45,8 +46,14 @@
     settings = await chrome.storage.sync.get(DEFAULT_SETTINGS);
     if (!settings.overlayWidth || settings.overlayWidth < 200) settings.overlayWidth = 300;
     attachListeners();
+    if (isSiteBlocked()) return; // hidden on this site
     if (settings.mode === 'always' && settings.enabled) mountOverlay(document.body);
     else { const t = getFullscreenTarget(); if (t && settings.enabled) mountOverlay(t); }
+  }
+
+  function isSiteBlocked() {
+    const list = settings.siteBlocklist;
+    return Array.isArray(list) && list.includes(location.hostname);
   }
 
   // ── Fullscreen ──────────────────────────────────────────────────────────────
@@ -483,7 +490,7 @@
   }
 
   function onSettingsChanged() {
-    if (!settings.enabled) { unmountOverlay(); return; }
+    if (!settings.enabled || isSiteBlocked()) { unmountOverlay(); return; }
     const target  = getFullscreenTarget();
     const visible = settings.mode === 'always' || target !== null;
     if (visible) {
