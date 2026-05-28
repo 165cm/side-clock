@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "__MSG_appDesc__",
   "default_locale": "ja",
-  "permissions": ["storage", "geolocation"],
+  "permissions": ["storage", "geolocation", "activeTab"],
   "host_permissions": ["https://api.open-meteo.com/*"],
   "background": {
     "service_worker": "background.js"

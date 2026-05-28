@@ -48,15 +48,16 @@ function render(s) {
   // Per-site toggle
   const hostEl   = document.getElementById('current-host');
   const siteTog  = document.getElementById('site-toggle');
-  const blocked  = Array.isArray(s.siteBlocklist) && s.siteBlocklist.includes(currentHost);
+  const list     = Array.isArray(s.siteBlocklist) ? s.siteBlocklist : [];
+  const blocked  = list.includes(currentHost);
   if (currentHost) {
     hostEl.textContent = currentHost;
-    hostEl.title       = currentHost;
+    hostEl.title       = `${currentHost}\n(非表示サイト: ${list.length}件)`;
     siteTog.checked    = !blocked;
     siteTog.disabled   = false;
   } else {
-    hostEl.textContent = '— (system page)';
-    hostEl.title       = '';
+    hostEl.textContent = '— (システムページ)';
+    hostEl.title       = 'このページでは設定できません';
     siteTog.checked    = true;
     siteTog.disabled   = true;
   }
