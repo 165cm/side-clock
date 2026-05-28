@@ -339,39 +339,47 @@
   }
 
   function moveToCorner(pos) {
+    // FLIP animation: First, Last, Invert, Play — GPU-accelerated, no layout thrash
+    const first = overlayEl.getBoundingClientRect();
+
     settings.position   = pos;
     settings.customLeft = -1;
     settings.customTop  = -1;
     chrome.storage.sync.set({ position: pos, customLeft: -1, customTop: -1 });
 
-    // Convert to pixel top/left so CSS transition can animate smoothly
-    const rect = overlayEl.getBoundingClientRect();
-    const ow = overlayEl.offsetWidth, oh = overlayEl.offsetHeight;
-    const vw = window.innerWidth,     vh = window.innerHeight;
-    Object.assign(overlayEl.style, {
-      top: rect.top + 'px', left: rect.left + 'px', bottom: '', right: ''
-    });
+    // LAST: instantly snap to destination via corner CSS (no transition)
+    overlayEl.style.transition = 'none';
+    overlayEl.style.transform  = 'none';
+    applyPosition();
 
-    const M = SNAP_MARGIN;
-    const target = {
-      'top-left':     { top: M,           left: M           },
-      'top-right':    { top: M,           left: vw - ow - M },
-      'bottom-left':  { top: vh - oh - M, left: M           },
-      'bottom-right': { top: vh - oh - M, left: vw - ow - M },
-    }[pos];
+    // Measure where the overlay actually ended up
+    const last = overlayEl.getBoundingClientRect();
+    const dx = first.left - last.left;
+    const dy = first.top  - last.top;
 
-    // Force reflow, then animate
+    if (dx === 0 && dy === 0) {
+      updateCornerMarker();
+      return;
+    }
+
+    // INVERT: pre-translate so it visually starts at the original position
+    overlayEl.style.willChange = 'transform';
+    overlayEl.style.transform  = `translate3d(${dx}px, ${dy}px, 0)`;
+    // Force the inverted state to commit before starting the transition
     overlayEl.offsetWidth;
-    overlayEl.style.transition = 'top 0.32s cubic-bezier(.4,0,.2,1), left 0.32s cubic-bezier(.4,0,.2,1)';
-    overlayEl.style.top  = target.top  + 'px';
-    overlayEl.style.left = target.left + 'px';
 
-    setTimeout(() => {
+    // PLAY: animate transform back to zero — composited on GPU
+    overlayEl.style.transition = 'transform 0.42s cubic-bezier(.22, 1, .36, 1)';
+    overlayEl.style.transform  = 'translate3d(0, 0, 0)';
+
+    const cleanup = () => {
       if (!overlayEl) return;
       overlayEl.style.transition = '';
-      applyPosition(); // restore corner-based CSS
+      overlayEl.style.transform  = '';
+      overlayEl.style.willChange = '';
       updateCornerMarker();
-    }, 360);
+    };
+    setTimeout(cleanup, 460);
   }
 
   // ── Drag ────────────────────────────────────────────────────────────────────
