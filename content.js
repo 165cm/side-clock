@@ -90,10 +90,10 @@
         </div>
       </div>
       <div class="sc-corner-nav">
-        <button class="sc-cnav" data-pos="top-left">↖</button>
-        <button class="sc-cnav" data-pos="top-right">↗</button>
-        <button class="sc-cnav" data-pos="bottom-left">↙</button>
-        <button class="sc-cnav" data-pos="bottom-right">↘</button>
+        <button class="sc-cnav" data-pos="top-left"     aria-label="Move to top-left"></button>
+        <button class="sc-cnav" data-pos="top-right"    aria-label="Move to top-right"></button>
+        <button class="sc-cnav" data-pos="bottom-left"  aria-label="Move to bottom-left"></button>
+        <button class="sc-cnav" data-pos="bottom-right" aria-label="Move to bottom-right"></button>
       </div>
     `;
     return el;
