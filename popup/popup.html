@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Side Clock</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🕐</div>
+    <div>
+      <div class="logo-title">Side Clock</div>
+      <div class="logo-sub" data-i18n="appSub"></div>
+    </div>
+  </div>
+  <label class="toggle" title="Enable / 有効">
+    <input type="checkbox" id="enabled">
+    <span class="slider"></span>
+  </label>
+</header>
+
+<div class="section-label" data-i18n="sectionWeather"></div>
+<div class="row">
+  <span data-i18n="weatherShow"></span>
+  <label class="toggle">
+    <input type="checkbox" id="weather">
+    <span class="slider"></span>
+  </label>
+</div>
+<div class="row" id="unit-row">
+  <span data-i18n="unitLabel"></span>
+  <div class="seg" id="unit-seg">
+    <button data-unit="C">°C</button>
+    <button data-unit="F">°F</button>
+  </div>
+</div>
+
+<div class="section-label" data-i18n="sectionClock"></div>
+<div class="row">
+  <span data-i18n="clockFormat"></span>
+  <div class="seg" id="hour12-seg">
+    <button data-h12="false" data-i18n-btn="format24h"></button>
+    <button data-h12="true"  data-i18n-btn="formatAmPm"></button>
+  </div>
+</div>
+
+<script src="popup.js"></script>
+</body>
+</html>
