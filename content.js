@@ -76,6 +76,7 @@
     el.className = 'sc-overlay';
     // SVG ring first (below content in stacking order)
     el.innerHTML = `
+      <div class="sc-hover-zone"></div>
       <svg class="sc-ring" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
         <path class="sc-ring-track"/>
         <path class="sc-ring-prog"/>
@@ -88,6 +89,12 @@
           <span class="sc-weather-icon"></span>
           <span class="sc-weather-temp"></span>
         </div>
+      </div>
+      <div class="sc-corner-nav">
+        <button class="sc-cnav" data-pos="top-left">↖</button>
+        <button class="sc-cnav" data-pos="top-right">↗</button>
+        <button class="sc-cnav" data-pos="bottom-left">↙</button>
+        <button class="sc-cnav" data-pos="bottom-right">↘</button>
       </div>
     `;
     return el;
@@ -109,7 +116,7 @@
 
     requestAnimationFrame(() => requestAnimationFrame(() => overlayEl.classList.add('sc-visible')));
 
-    if (isNew) makeDraggable();
+    if (isNew) { makeDraggable(); setupCornerNav(); }
     startClock();
     if (settings.weather) scheduleWeather();
     else overlayEl.querySelector('.sc-weather').style.display = 'none';
@@ -311,6 +318,86 @@
     return '🌡️';
   }
 
+  // ── Corner navigation ───────────────────────────────────────────────────────
+
+  function setupCornerNav() {
+    const grip = overlayEl.querySelector('.sc-grip');
+    const zone = overlayEl.querySelector('.sc-hover-zone');
+    const nav  = overlayEl.querySelector('.sc-corner-nav');
+    let hideTimer = null;
+
+    function activate() {
+      clearTimeout(hideTimer);
+      zone.style.pointerEvents = 'auto';
+      // Mark the current corner as inactive
+      const cur = settings.customLeft >= 0 ? null : settings.position;
+      nav.querySelectorAll('.sc-cnav').forEach(btn => {
+        btn.classList.toggle('sc-cnav-cur', btn.dataset.pos === cur);
+      });
+      nav.classList.add('sc-nav-on');
+    }
+
+    function deactivate() {
+      clearTimeout(hideTimer);
+      hideTimer = setTimeout(() => {
+        nav.classList.remove('sc-nav-on');
+        zone.style.pointerEvents = 'none';
+      }, 300);
+    }
+
+    grip.addEventListener('mouseenter', activate);
+    grip.addEventListener('mouseleave', deactivate);
+    zone.addEventListener('mouseenter', () => clearTimeout(hideTimer));
+    zone.addEventListener('mouseleave', deactivate);
+    nav.addEventListener('mouseenter',  () => clearTimeout(hideTimer));
+    nav.addEventListener('mouseleave',  deactivate);
+
+    nav.querySelectorAll('.sc-cnav').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        if (btn.classList.contains('sc-cnav-cur')) return;
+        nav.classList.remove('sc-nav-on');
+        zone.style.pointerEvents = 'none';
+        moveToCorner(btn.dataset.pos);
+      });
+    });
+  }
+
+  function moveToCorner(pos) {
+    settings.position   = pos;
+    settings.customLeft = -1;
+    settings.customTop  = -1;
+    chrome.storage.sync.set({ position: pos, customLeft: -1, customTop: -1 });
+
+    // Convert to pixel top/left so CSS transition can animate smoothly
+    const rect = overlayEl.getBoundingClientRect();
+    const ow = overlayEl.offsetWidth, oh = overlayEl.offsetHeight;
+    const vw = window.innerWidth,     vh = window.innerHeight;
+    Object.assign(overlayEl.style, {
+      top: rect.top + 'px', left: rect.left + 'px', bottom: '', right: ''
+    });
+
+    const M = SNAP_MARGIN;
+    const target = {
+      'top-left':     { top: M,           left: M           },
+      'top-right':    { top: M,           left: vw - ow - M },
+      'bottom-left':  { top: vh - oh - M, left: M           },
+      'bottom-right': { top: vh - oh - M, left: vw - ow - M },
+    }[pos];
+
+    // Force reflow, then animate
+    overlayEl.offsetWidth;
+    overlayEl.style.transition = 'top 0.32s cubic-bezier(.4,0,.2,1), left 0.32s cubic-bezier(.4,0,.2,1)';
+    overlayEl.style.top  = target.top  + 'px';
+    overlayEl.style.left = target.left + 'px';
+
+    setTimeout(() => {
+      if (!overlayEl) return;
+      overlayEl.style.transition = '';
+      applyPosition(); // restore corner-based CSS
+    }, 360);
+  }
+
   // ── Drag ────────────────────────────────────────────────────────────────────
 
   function makeDraggable() {
@@ -319,6 +406,9 @@
 
   function startDrag(e) {
     e.preventDefault(); e.stopPropagation();
+    // Hide corner nav during drag
+    overlayEl.querySelector('.sc-corner-nav').classList.remove('sc-nav-on');
+    overlayEl.querySelector('.sc-hover-zone').style.pointerEvents = 'none';
     const rect = overlayEl.getBoundingClientRect();
     Object.assign(overlayEl.style, { top: rect.top+'px', left: rect.left+'px', bottom:'', right:'' });
     isDragging = true; dragMX = e.clientX; dragMY = e.clientY;
