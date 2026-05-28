@@ -115,65 +115,53 @@
 .sc-weather-icon { line-height: 1; flex-shrink: 0; }
 .sc-weather-temp { font-weight: 600; font-variant-numeric: tabular-nums; }
 
-/* ── Hover zone (transparent — activated by JS on grip hover) ───────────── */
-.sc-hover-zone {
-  position: absolute;
-  inset: 0;
-  pointer-events: none; /* JS switches to auto while nav is open */
-  z-index: 1;
-  border-radius: inherit;
-}
-
-/* ── Corner navigation ──────────────────────────────────────────────────── */
+/* ── Corner navigation (always visible at low opacity) ──────────────────── */
 .sc-corner-nav {
   position: absolute;
   inset: 0;
-  pointer-events: none; /* only the buttons inside capture events */
-  opacity: 0;
-  transition: opacity 0.15s;
+  pointer-events: none; /* container transparent — only buttons capture events */
   z-index: 20;
   border-radius: inherit;
 }
 
-.sc-corner-nav.sc-nav-on { opacity: 1; }
-
 .sc-cnav {
   position: absolute;
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(10, 12, 18, 0.82);
-  border: 1px solid rgba(79, 195, 247, 0.55);
+  background: transparent;
+  border: none;
   border-radius: 50%;
-  color: #4fc3f7;
-  font-size: 13px;
+  color: rgba(255, 255, 255, 0.28);
+  font-size: 14px;
   cursor: pointer;
   pointer-events: auto;
-  transition: background 0.15s, transform 0.15s;
+  opacity: 1;
+  transition: color 0.15s, background 0.15s, transform 0.15s;
   line-height: 1;
   padding: 0;
 }
 
 .sc-cnav:hover {
-  background: rgba(79, 195, 247, 0.22);
-  transform: scale(1.2);
+  color: #4fc3f7;
+  background: rgba(79, 195, 247, 0.18);
+  transform: scale(1.25);
+  border-radius: 50%;
 }
 
 /* Positioned at each corner of the overlay */
-.sc-cnav[data-pos="top-left"]     { top: 6px;    left: 6px;  }
-.sc-cnav[data-pos="top-right"]    { top: 6px;    right: 6px; }
-.sc-cnav[data-pos="bottom-left"]  { bottom: 6px; left: 6px;  }
-.sc-cnav[data-pos="bottom-right"] { bottom: 6px; right: 6px; }
+.sc-cnav[data-pos="top-left"]     { top: 5px;    left: 5px;  }
+.sc-cnav[data-pos="top-right"]    { top: 5px;    right: 5px; }
+.sc-cnav[data-pos="bottom-left"]  { bottom: 5px; left: 5px;  }
+.sc-cnav[data-pos="bottom-right"] { bottom: 5px; right: 5px; }
 
-/* Current corner — dimmed, not clickable */
+/* Current corner — nearly invisible, not clickable */
 .sc-cnav.sc-cnav-cur {
-  opacity: 0.18;
+  color: rgba(255, 255, 255, 0.1);
   cursor: default;
   pointer-events: none;
-  border-color: rgba(255, 255, 255, 0.15);
-  color: rgba(255, 255, 255, 0.35);
 }
 
 /* ── Snap guide lines ───────────────────────────────────────────────────── */

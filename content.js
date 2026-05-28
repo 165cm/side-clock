@@ -76,7 +76,6 @@
     el.className = 'sc-overlay';
     // SVG ring first (below content in stacking order)
     el.innerHTML = `
-      <div class="sc-hover-zone"></div>
       <svg class="sc-ring" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
         <path class="sc-ring-track"/>
         <path class="sc-ring-prog"/>
@@ -321,45 +320,21 @@
   // ── Corner navigation ───────────────────────────────────────────────────────
 
   function setupCornerNav() {
-    const grip = overlayEl.querySelector('.sc-grip');
-    const zone = overlayEl.querySelector('.sc-hover-zone');
-    const nav  = overlayEl.querySelector('.sc-corner-nav');
-    let hideTimer = null;
-
-    function activate() {
-      clearTimeout(hideTimer);
-      zone.style.pointerEvents = 'auto';
-      // Mark the current corner as inactive
-      const cur = settings.customLeft >= 0 ? null : settings.position;
-      nav.querySelectorAll('.sc-cnav').forEach(btn => {
-        btn.classList.toggle('sc-cnav-cur', btn.dataset.pos === cur);
-      });
-      nav.classList.add('sc-nav-on');
-    }
-
-    function deactivate() {
-      clearTimeout(hideTimer);
-      hideTimer = setTimeout(() => {
-        nav.classList.remove('sc-nav-on');
-        zone.style.pointerEvents = 'none';
-      }, 300);
-    }
-
-    grip.addEventListener('mouseenter', activate);
-    grip.addEventListener('mouseleave', deactivate);
-    zone.addEventListener('mouseenter', () => clearTimeout(hideTimer));
-    zone.addEventListener('mouseleave', deactivate);
-    nav.addEventListener('mouseenter',  () => clearTimeout(hideTimer));
-    nav.addEventListener('mouseleave',  deactivate);
-
-    nav.querySelectorAll('.sc-cnav').forEach(btn => {
+    updateCornerMarker();
+    overlayEl.querySelectorAll('.sc-cnav').forEach(btn => {
       btn.addEventListener('click', e => {
         e.stopPropagation();
         if (btn.classList.contains('sc-cnav-cur')) return;
-        nav.classList.remove('sc-nav-on');
-        zone.style.pointerEvents = 'none';
         moveToCorner(btn.dataset.pos);
       });
+    });
+  }
+
+  function updateCornerMarker() {
+    if (!overlayEl) return;
+    const cur = settings.customLeft >= 0 ? null : settings.position;
+    overlayEl.querySelectorAll('.sc-cnav').forEach(btn => {
+      btn.classList.toggle('sc-cnav-cur', btn.dataset.pos === cur);
     });
   }
 
@@ -395,6 +370,7 @@
       if (!overlayEl) return;
       overlayEl.style.transition = '';
       applyPosition(); // restore corner-based CSS
+      updateCornerMarker();
     }, 360);
   }
 
@@ -406,9 +382,6 @@
 
   function startDrag(e) {
     e.preventDefault(); e.stopPropagation();
-    // Hide corner nav during drag
-    overlayEl.querySelector('.sc-corner-nav').classList.remove('sc-nav-on');
-    overlayEl.querySelector('.sc-hover-zone').style.pointerEvents = 'none';
     const rect = overlayEl.getBoundingClientRect();
     Object.assign(overlayEl.style, { top: rect.top+'px', left: rect.left+'px', bottom:'', right:'' });
     isDragging = true; dragMX = e.clientX; dragMY = e.clientY;
@@ -441,6 +414,7 @@
     const top  = parseFloat(overlayEl.style.top)  || 0;
     settings.customLeft = left; settings.customTop = top;
     chrome.storage.sync.set({ customLeft: left, customTop: top });
+    updateCornerMarker(); // drag = no corner active → all 4 buttons lit
   }
 
   function computeSnap(l, t, ow, oh, vw, vh) {
