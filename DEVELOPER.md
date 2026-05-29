@@ -1,5 +1,7 @@
 # Developer Guide — Side Clock
 
+[← README に戻る](./README.md)
+
 Chrome拡張機能 Side Clock の開発者向けドキュメントです。
 
 ---
