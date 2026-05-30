@@ -2,17 +2,22 @@
   'use strict';
 
   const DEFAULT_SETTINGS = {
-    mode:          'always',
-    position:      'top-right',
-    weather:       false,  // off by default — avoids geolocation prompt on first install
-    unit:          'C',
-    hour12:        false,
-    enabled:       true,
-    autoFit:       true,
-    overlayWidth:  260,
-    customLeft:    -1,
-    customTop:     -1,
-    siteBlocklist: []      // hostnames where the overlay is hidden
+    mode:           'always',
+    position:       'top-right',
+    weather:        false,  // off by default
+    unit:           'C',
+    hour12:         false,
+    enabled:        true,
+    autoFit:        true,
+    overlayWidth:   260,
+    customLeft:     -1,
+    customTop:      -1,
+    siteBlocklist:  [],     // hostnames where the overlay is hidden
+    weatherCountry: 'JP',   // ISO country code for the registered postal code
+    weatherPostal:  '',     // registered postal code
+    weatherLat:     null,   // resolved coordinates (null = no location registered)
+    weatherLon:     null,
+    weatherPlace:   ''       // human-readable label for the registered place
   };
 
   const POSITION_MAP = {
@@ -471,17 +476,6 @@
     document.addEventListener('fullscreenchange',       onFullscreenChange);
     document.addEventListener('webkitfullscreenchange', onFullscreenChange);
     window.addEventListener('resize', debounce(onFullscreenChange, 200));
-
-    chrome.runtime.onMessage.addListener((msg, _s, sendResponse) => {
-      if (msg.type === 'GET_COORDS') {
-        navigator.geolocation.getCurrentPosition(
-          p => sendResponse({ lat: p.coords.latitude, lon: p.coords.longitude }),
-          () => sendResponse(null),
-          { maximumAge: 30 * 60 * 1000, timeout: 8000 }
-        );
-        return true;
-      }
-    });
 
     chrome.storage.onChanged.addListener((changes) => {
       for (const [k, { newValue }] of Object.entries(changes)) settings[k] = newValue;

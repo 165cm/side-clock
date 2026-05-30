@@ -9,7 +9,12 @@ const DEFAULT_SETTINGS = {
   weather: true,
   unit: 'C',
   hour12: false,
-  enabled: true
+  enabled: true,
+  weatherCountry: 'JP', // ISO country code for postal-code lookup
+  weatherPostal:  '',   // registered postal code
+  weatherLat:     null, // resolved coordinates (null = no location registered)
+  weatherLon:     null,
+  weatherPlace:   ''     // human-readable label for the registered place
 };
 
 chrome.runtime.onInstalled.addListener(async () => {
@@ -19,36 +24,32 @@ chrome.runtime.onInstalled.addListener(async () => {
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === 'GET_WEATHER') {
-    handleWeatherRequest(sender.tab?.id).then(sendResponse).catch(() => sendResponse(null));
+    handleWeatherRequest().then(sendResponse).catch(() => sendResponse(null));
     return true; // async
   }
 });
 
-async function handleWeatherRequest(tabId) {
-  // 1. Check session cache
+async function handleWeatherRequest() {
+  // 1. Read the location registered by the user in settings (no geolocation)
+  const cfg = await chrome.storage.sync.get(['weatherLat', 'weatherLon']);
+  const lat = cfg.weatherLat;
+  const lon = cfg.weatherLon;
+  if (lat == null || lon == null) return { weather: null }; // no location registered yet
+
+  // 2. Check session cache (valid only for the same coordinates)
   const cache = await chrome.storage.session.get(CACHE_KEY).catch(() => ({}));
   const cached = cache[CACHE_KEY];
-  if (cached && Date.now() - cached.fetchedAt < CACHE_TTL_MS) {
+  if (cached && cached.lat === lat && cached.lon === lon &&
+      Date.now() - cached.fetchedAt < CACHE_TTL_MS) {
     return { weather: cached };
   }
-
-  // 2. Get coordinates from the content script (service workers can't use geolocation)
-  if (!tabId) return { weather: null };
-
-  let coords = null;
-  try {
-    coords = await chrome.tabs.sendMessage(tabId, { type: 'GET_COORDS' });
-  } catch (_) {
-    return { weather: null };
-  }
-  if (!coords) return { weather: null };
 
   // 3. Fetch from Open-Meteo (no API key required)
   let json;
   try {
     const url =
       `https://api.open-meteo.com/v1/forecast` +
-      `?latitude=${coords.lat}&longitude=${coords.lon}` +
+      `?latitude=${lat}&longitude=${lon}` +
       `&current_weather=true`;
     const res = await fetch(url);
     json = await res.json();
@@ -63,6 +64,7 @@ async function handleWeatherRequest(tabId) {
     temperature: cw.temperature,
     weathercode: cw.weathercode,
     windspeed:   cw.windspeed,
+    lat, lon,
     fetchedAt:   Date.now()
   };
 

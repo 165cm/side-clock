@@ -94,6 +94,48 @@ header {
 .seg button + button { border-left: 1px solid rgba(255,255,255,0.12); }
 .seg button.active { background: #4fc3f7; color: #0f1117; font-weight: 600; }
 
+/* ── Inputs / select / button (weather location) ── */
+.select, .input {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 7px;
+  color: #e8eaf0;
+  font-family: inherit;
+  font-size: 12px;
+  padding: 5px 8px;
+  outline: none;
+}
+.select { flex-shrink: 0; max-width: 56%; }
+.input  { flex: 1; min-width: 0; text-align: right; }
+.select:focus, .input:focus { border-color: #4fc3f7; }
+.input::placeholder { color: rgba(255,255,255,0.3); }
+
+.btn {
+  width: 100%;
+  background: #4fc3f7;
+  color: #0f1117;
+  border: none;
+  border-radius: 7px;
+  padding: 7px 10px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+}
+.btn:hover  { background: #6fd0fb; }
+.btn:active { opacity: 0.8; }
+
+.weather-status {
+  font-size: 11px;
+  line-height: 1.4;
+  padding: 2px 16px 8px;
+  color: rgba(255,255,255,0.5);
+}
+.weather-status.ok   { color: #7fdca0; }
+.weather-status.err  { color: #f0907f; }
+.weather-status.hint { color: rgba(255,255,255,0.5); }
+
 /* ── Host name (per-site row) ── */
 .site-host {
   font-size: 12px;

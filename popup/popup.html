@@ -39,11 +39,59 @@
     <span class="slider"></span>
   </label>
 </div>
-<div class="row" id="unit-row">
-  <span data-i18n="unitLabel"></span>
-  <div class="seg" id="unit-seg">
-    <button data-unit="C">°C</button>
-    <button data-unit="F">°F</button>
+
+<div id="weather-config">
+  <div class="row">
+    <span data-i18n="weatherCountry"></span>
+    <select id="weather-country" class="select">
+      <option value="JP">日本 (JP)</option>
+      <option value="US">United States (US)</option>
+      <option value="GB">United Kingdom (GB)</option>
+      <option value="CA">Canada (CA)</option>
+      <option value="AU">Australia (AU)</option>
+      <option value="NZ">New Zealand (NZ)</option>
+      <option value="DE">Deutschland (DE)</option>
+      <option value="FR">France (FR)</option>
+      <option value="ES">España (ES)</option>
+      <option value="IT">Italia (IT)</option>
+      <option value="NL">Nederland (NL)</option>
+      <option value="BE">Belgique (BE)</option>
+      <option value="CH">Schweiz (CH)</option>
+      <option value="AT">Österreich (AT)</option>
+      <option value="SE">Sverige (SE)</option>
+      <option value="NO">Norge (NO)</option>
+      <option value="DK">Danmark (DK)</option>
+      <option value="FI">Suomi (FI)</option>
+      <option value="PL">Polska (PL)</option>
+      <option value="PT">Portugal (PT)</option>
+      <option value="CZ">Česko (CZ)</option>
+      <option value="IE">Ireland (IE)</option>
+      <option value="IN">India (IN)</option>
+      <option value="MY">Malaysia (MY)</option>
+      <option value="PH">Philippines (PH)</option>
+      <option value="TH">Thailand (TH)</option>
+      <option value="BR">Brasil (BR)</option>
+      <option value="MX">México (MX)</option>
+      <option value="ZA">South Africa (ZA)</option>
+      <option value="TR">Türkiye (TR)</option>
+      <option value="RU">Россия (RU)</option>
+    </select>
+  </div>
+  <div class="row">
+    <span data-i18n="weatherPostal"></span>
+    <input id="weather-postal" class="input" type="text" autocomplete="off" placeholder="100-0001">
+  </div>
+  <div class="row">
+    <button id="weather-register" class="btn" data-i18n-btn="weatherRegister"></button>
+  </div>
+  <div id="weather-status" class="weather-status"></div>
+
+  <div class="row" id="unit-row">
+    <span data-i18n="unitLabel"></span>
+    <div class="seg" id="unit-seg">
+      <button data-unit="C">°C</button>
+      <button data-unit="F">°F</button>
+    </div>
   </div>
 </div>
 

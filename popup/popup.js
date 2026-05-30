@@ -1,11 +1,16 @@
 'use strict';
 
 const DEFAULT_SETTINGS = {
-  enabled:       true,
-  weather:       false, // off by default — no geolocation prompt on install
-  unit:          'C',
-  hour12:        false,
-  siteBlocklist: [],
+  enabled:        true,
+  weather:        false, // off by default
+  unit:           'C',
+  hour12:         false,
+  siteBlocklist:  [],
+  weatherCountry: 'JP',  // ISO country code for the registered postal code
+  weatherPostal:  '',    // registered postal code
+  weatherLat:     null,  // resolved coordinates (null = no location registered)
+  weatherLon:     null,
+  weatherPlace:   '',     // human-readable label for the registered place
 };
 
 let currentHost = '';
@@ -63,7 +68,11 @@ function render(s) {
   }
 
   document.getElementById('weather').checked = s.weather;
-  document.getElementById('unit-row').style.display = s.weather ? '' : 'none';
+  document.getElementById('weather-config').style.display = s.weather ? '' : 'none';
+
+  document.getElementById('weather-country').value = s.weatherCountry || 'JP';
+  document.getElementById('weather-postal').value  = s.weatherPostal || '';
+  renderWeatherStatus(s);
 
   document.querySelectorAll('#unit-seg button').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.unit === s.unit);
@@ -97,8 +106,76 @@ document.getElementById('site-toggle').addEventListener('change', (e) => {
 
 document.getElementById('weather').addEventListener('change', (e) => {
   save({ weather: e.target.checked });
-  document.getElementById('unit-row').style.display = e.target.checked ? '' : 'none';
+  document.getElementById('weather-config').style.display = e.target.checked ? '' : 'none';
 });
+
+// ── Weather location (postal code → coordinates) ──────────────────────────────
+
+function setStatus(text, kind) {
+  const el = document.getElementById('weather-status');
+  el.textContent = text || '';
+  el.className = 'weather-status' + (kind ? ' ' + kind : '');
+}
+
+// Show the registered place, or a call-to-action prompting the user to register.
+function renderWeatherStatus(s) {
+  if (s.weatherLat != null && s.weatherLon != null && s.weatherPlace) {
+    setStatus('✓ ' + chrome.i18n.getMessage('weatherRegistered') + ' ' + s.weatherPlace, 'ok');
+  } else {
+    setStatus(chrome.i18n.getMessage('weatherCtaHint'), 'hint');
+  }
+}
+
+document.getElementById('weather-country').addEventListener('change', (e) => {
+  save({ weatherCountry: e.target.value });
+});
+
+document.getElementById('weather-postal').addEventListener('input', (e) => {
+  save({ weatherPostal: e.target.value });
+});
+
+document.getElementById('weather-register').addEventListener('click', registerLocation);
+document.getElementById('weather-postal').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') registerLocation();
+});
+
+async function registerLocation() {
+  const country = (document.getElementById('weather-country').value || '').trim();
+  const postal  = (document.getElementById('weather-postal').value || '').trim();
+  if (!postal) { setStatus(chrome.i18n.getMessage('weatherError'), 'err'); return; }
+
+  setStatus(chrome.i18n.getMessage('weatherSearching'), 'hint');
+
+  try {
+    // Zippopotam.us resolves a country + postal code to coordinates — no API key.
+    const url = `https://api.zippopotam.us/${encodeURIComponent(country.toLowerCase())}/` +
+                `${encodeURIComponent(postal.toUpperCase())}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('not found');
+    const json = await res.json();
+    const place = json.places && json.places[0];
+    if (!place) throw new Error('not found');
+
+    const lat = parseFloat(place.latitude);
+    const lon = parseFloat(place.longitude);
+    if (!isFinite(lat) || !isFinite(lon)) throw new Error('bad coords');
+
+    const label = [place['place name'], place['state abbreviation'] || place.state]
+      .filter(Boolean).join(', ') + ` (${country.toUpperCase()})`;
+
+    save({
+      weatherCountry: country,
+      weatherPostal:  postal,
+      weatherLat:     lat,
+      weatherLon:     lon,
+      weatherPlace:   label,
+    });
+    setStatus('✓ ' + chrome.i18n.getMessage('weatherRegistered') + ' ' + label, 'ok');
+  } catch (_) {
+    save({ weatherLat: null, weatherLon: null, weatherPlace: '' });
+    setStatus(chrome.i18n.getMessage('weatherError'), 'err');
+  }
+}
 
 document.querySelectorAll('#unit-seg button').forEach(btn => {
   btn.addEventListener('click', () => {

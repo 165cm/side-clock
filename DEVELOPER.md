@@ -50,10 +50,11 @@ SideClock() IIFE
 
 ```
 onMessage(GET_WEATHER)
-└── storage.session キャッシュ確認（TTL 15分）
-    ├── HIT  → キャッシュ返却
-    └── MISS → tabs.sendMessage(GET_COORDS) → content.js が位置情報返却
-               → Open-Meteo API fetch → storage.session 保存 → 返却
+└── storage.sync から登録地点の緯度経度を取得
+    ├── 未登録 → null 返却（天気は非表示）
+    └── 登録済 → storage.session キャッシュ確認（同一座標・TTL 15分）
+                 ├── HIT  → キャッシュ返却
+                 └── MISS → Open-Meteo API fetch → storage.session 保存 → 返却
 ```
 
 ---
@@ -132,6 +133,11 @@ prog.setAttribute('stroke-dasharray', `${dash} ${perimeter + 20}`);
 | `overlayWidth` | number | `260` | オーバーレイ幅(px) |
 | `customLeft` | number | `-1` | ドラッグ位置X（-1=未使用） |
 | `customTop` | number | `-1` | ドラッグ位置Y（-1=未使用） |
+| `weatherCountry` | string | `'JP'` | 郵便番号検索の国コード(ISO) |
+| `weatherPostal` | string | `''` | 登録した郵便番号 |
+| `weatherLat` | number\|null | `null` | 解決済み緯度（null=地点未登録） |
+| `weatherLon` | number\|null | `null` | 解決済み経度 |
+| `weatherPlace` | string | `''` | 登録地点の表示名 |
 
 ### `chrome.storage.session`（天気キャッシュ）
 
@@ -163,7 +169,17 @@ GET https://api.open-meteo.com/v1/forecast
   ?latitude={lat}&longitude={lon}&current_weather=true
 ```
 
-送信するのは緯度・経度のみ。位置情報は Service Worker から直接取得できないため、`GET_COORDS` メッセージで content script に委譲する。
+送信するのは緯度・経度のみ。座標は端末の現在位置ではなく、ユーザーが設定で登録した地点を使う。
+
+### 地点の登録（ジオコーディング）
+
+設定ポップアップで「国／地域」＋「郵便番号」を入力して登録する。郵便番号→緯度経度の変換は [Zippopotam.us](https://www.zippopotam.us/)（無料・APIキー不要・多国対応）を使用。
+
+```
+GET https://api.zippopotam.us/{country}/{postalcode}
+```
+
+解決した緯度経度・地点名を `storage.sync`（`weatherLat` / `weatherLon` / `weatherPlace`）に保存する。地点が未登録（`weatherLat == null`）の場合、`GET_WEATHER` は `null` を返し天気は表示されない。`navigator.geolocation` は使用しない。
 
 ---
 
