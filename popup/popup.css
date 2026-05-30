@@ -126,6 +126,14 @@ header {
 .btn:hover  { background: #6fd0fb; }
 .btn:active { opacity: 0.8; }
 
+/* Japanese postal code: 〒 ___ – ____ */
+.postal-jp { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.postal-mark { color: rgba(255,255,255,0.45); font-size: 13px; }
+.postal-dash { color: rgba(255,255,255,0.45); }
+.input.postal-seg { flex: none; text-align: center; }
+#postal-jp1 { width: 48px; }
+#postal-jp2 { width: 60px; }
+
 .weather-status {
   font-size: 11px;
   line-height: 1.4;

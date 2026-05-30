@@ -77,9 +77,18 @@
       <option value="RU">Россия (RU)</option>
     </select>
   </div>
-  <div class="row">
+  <div class="row" id="postal-row-jp">
     <span data-i18n="weatherPostal"></span>
-    <input id="weather-postal" class="input" type="text" autocomplete="off" placeholder="100-0001">
+    <span class="postal-jp">
+      <span class="postal-mark">〒</span>
+      <input id="postal-jp1" class="input postal-seg" type="text" inputmode="numeric" maxlength="3" autocomplete="off" placeholder="100">
+      <span class="postal-dash">–</span>
+      <input id="postal-jp2" class="input postal-seg" type="text" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="0001">
+    </span>
+  </div>
+  <div class="row" id="postal-row-default">
+    <span data-i18n="weatherPostal"></span>
+    <input id="weather-postal" class="input" type="text" autocomplete="off" placeholder="10001">
   </div>
   <div class="row">
     <button id="weather-register" class="btn" data-i18n-btn="weatherRegister"></button>

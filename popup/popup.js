@@ -70,8 +70,10 @@ function render(s) {
   document.getElementById('weather').checked = s.weather;
   document.getElementById('weather-config').style.display = s.weather ? '' : 'none';
 
-  document.getElementById('weather-country').value = s.weatherCountry || 'JP';
-  document.getElementById('weather-postal').value  = s.weatherPostal || '';
+  const country = s.weatherCountry || 'JP';
+  document.getElementById('weather-country').value = country;
+  setPostalInputs(country, s.weatherPostal || '');
+  updatePostalMode(country);
   renderWeatherStatus(s);
 
   document.querySelectorAll('#unit-seg button').forEach(btn => {
@@ -126,22 +128,57 @@ function renderWeatherStatus(s) {
   }
 }
 
+// Japan uses split 3+4 boxes (no hyphen typing needed); others use one box.
+function updatePostalMode(country) {
+  const isJP = country === 'JP';
+  document.getElementById('postal-row-jp').style.display      = isJP ? '' : 'none';
+  document.getElementById('postal-row-default').style.display = isJP ? 'none' : '';
+}
+
+// Read the postal code from whichever input layout is active, normalized for the API.
+function getPostal(country) {
+  if (country === 'JP') {
+    const a = (document.getElementById('postal-jp1').value || '').replace(/\D/g, '');
+    const b = (document.getElementById('postal-jp2').value || '').replace(/\D/g, '');
+    if (!a && !b) return '';
+    return b ? `${a}-${b}` : a;
+  }
+  return (document.getElementById('weather-postal').value || '').trim();
+}
+
+// Fill the input layout from a stored postal code (e.g. "100-0001").
+function setPostalInputs(country, postal) {
+  if (country === 'JP') {
+    const digits = (postal || '').replace(/\D/g, '');
+    document.getElementById('postal-jp1').value = digits.slice(0, 3);
+    document.getElementById('postal-jp2').value = digits.slice(3, 7);
+  } else {
+    document.getElementById('weather-postal').value = postal || '';
+  }
+}
+
 document.getElementById('weather-country').addEventListener('change', (e) => {
-  save({ weatherCountry: e.target.value });
+  const country = e.target.value;
+  updatePostalMode(country);
+  save({ weatherCountry: country });
 });
 
-document.getElementById('weather-postal').addEventListener('input', (e) => {
-  save({ weatherPostal: e.target.value });
+// Auto-advance from the 3-digit box to the 4-digit box for Japanese codes.
+const jp1 = document.getElementById('postal-jp1');
+jp1.addEventListener('input', () => {
+  if (jp1.value.length >= 3) document.getElementById('postal-jp2').focus();
+});
+
+['weather-postal', 'postal-jp1', 'postal-jp2'].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('keydown', (e) => { if (e.key === 'Enter') registerLocation(); });
 });
 
 document.getElementById('weather-register').addEventListener('click', registerLocation);
-document.getElementById('weather-postal').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') registerLocation();
-});
 
 async function registerLocation() {
   const country = (document.getElementById('weather-country').value || '').trim();
-  const postal  = (document.getElementById('weather-postal').value || '').trim();
+  const postal  = getPostal(country);
   if (!postal) { setStatus(chrome.i18n.getMessage('weatherError'), 'err'); return; }
 
   setStatus(chrome.i18n.getMessage('weatherSearching'), 'hint');

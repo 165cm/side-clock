@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Side Clock",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "__MSG_appDesc__",
   "default_locale": "ja",
   "permissions": ["storage", "activeTab"],
