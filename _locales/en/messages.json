@@ -2,6 +2,7 @@
   "appName":        { "message": "Side Clock" },
   "appDesc":        { "message": "Display clock and weather as a news-style overlay during fullscreen" },
   "appSub":         { "message": "News-style overlay" },
+  "reloadNotice":   { "message": "Settings can't apply live on this page. Reload the page to apply your changes." },
   "sectionMode":    { "message": "Display Mode" },
   "modeFullscreen": { "message": "Fullscreen only" },
   "modeAlways":     { "message": "Always show" },

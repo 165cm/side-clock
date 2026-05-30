@@ -477,6 +477,12 @@
     document.addEventListener('webkitfullscreenchange', onFullscreenChange);
     window.addEventListener('resize', debounce(onFullscreenChange, 200));
 
+    // Let the popup detect whether this page already has the content script,
+    // so it can warn the user to reload when live updates aren't possible.
+    chrome.runtime.onMessage.addListener((msg, _s, sendResponse) => {
+      if (msg && msg.type === 'PING') { sendResponse(true); return; }
+    });
+
     chrome.storage.onChanged.addListener((changes) => {
       for (const [k, { newValue }] of Object.entries(changes)) settings[k] = newValue;
       onSettingsChanged();

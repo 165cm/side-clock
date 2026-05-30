@@ -23,6 +23,18 @@ header {
 .logo-title { font-size: 0.95rem; font-weight: 700; letter-spacing: 0.02em; color: #fff; }
 .logo-sub   { font-size: 0.65rem; color: rgba(255,255,255,0.4); margin-top: 1px; }
 
+/* ── Reload notice ── */
+.reload-notice {
+  margin: 10px 12px 0;
+  padding: 8px 10px;
+  background: rgba(240,144,127,0.12);
+  border: 1px solid rgba(240,144,127,0.4);
+  border-radius: 7px;
+  color: #f0b8ac;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
 /* ── Section labels ── */
 .section-label {
   font-size: 0.62rem;

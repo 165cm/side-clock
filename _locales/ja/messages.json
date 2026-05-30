@@ -2,6 +2,7 @@
   "appName":        { "message": "Side Clock" },
   "appDesc":        { "message": "フルスクリーン中に時計と天気をニュース番組風に表示" },
   "appSub":         { "message": "ニュース風オーバーレイ" },
+  "reloadNotice":   { "message": "このページには設定が即時反映されません。変更を反映するにはページを再読み込みしてください。" },
   "sectionMode":    { "message": "表示モード" },
   "modeFullscreen": { "message": "フルスクリーン時のみ" },
   "modeAlways":     { "message": "常に表示" },

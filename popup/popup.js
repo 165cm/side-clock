@@ -31,8 +31,24 @@ function applyI18n() {
 chrome.storage.sync.get(DEFAULT_SETTINGS, (s) => {
   S = s;
   applyI18n();
-  loadCurrentTab(() => render(s));
+  loadCurrentTab(() => { render(s); checkLiveTab(); });
 });
+
+// Settings apply live via chrome.storage.onChanged in the content script. Pages
+// opened before the extension was installed/updated have no content script yet,
+// so changes can't take effect until reload — detect that and show a notice.
+function checkLiveTab() {
+  const notice = document.getElementById('reload-notice');
+  if (!currentHost) { notice.style.display = 'none'; return; } // system page — no overlay
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    const id = tabs && tabs[0] && tabs[0].id;
+    if (id == null) { notice.style.display = 'none'; return; }
+    chrome.tabs.sendMessage(id, { type: 'PING' }, () => {
+      // lastError set => no content script on this page => reload needed
+      notice.style.display = chrome.runtime.lastError ? '' : 'none';
+    });
+  });
+}
 
 function loadCurrentTab(done) {
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
