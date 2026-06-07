@@ -24,6 +24,7 @@
 
   const SNAP_MARGIN    = 24;
   const SNAP_THRESHOLD = 32;
+  const CORNER_TOLERANCE = SNAP_THRESHOLD + 2;
   const RING_RADIUS    = 12;
   const PADDING_H      = 18;  // horizontal padding each side
 
@@ -43,7 +44,7 @@
   // ── Init ────────────────────────────────────────────────────────────────────
 
   async function init() {
-    settings = await chrome.storage.sync.get(DEFAULT_SETTINGS);
+    settings = await scExt.getStorage('sync', DEFAULT_SETTINGS);
     if (!settings.overlayWidth || settings.overlayWidth < 200) settings.overlayWidth = 300;
     attachListeners();
     if (isSiteBlocked()) return; // hidden on this site
@@ -297,7 +298,7 @@
 
   async function fetchWeather() {
     try {
-      const res = await chrome.runtime.sendMessage({ type: 'GET_WEATHER' });
+      const res = await scExt.sendRuntimeMessage({ type: 'GET_WEATHER' });
       if (res && res.weather) renderWeather(res.weather);
     } catch (_) {}
   }
@@ -339,10 +340,42 @@
 
   function updateCornerMarker() {
     if (!overlayEl) return;
-    const cur = settings.customLeft >= 0 ? null : settings.position;
+    const cur = inferCurrentCorner() || (settings.customLeft >= 0 ? null : settings.position);
     overlayEl.querySelectorAll('.sc-cnav').forEach(btn => {
       btn.classList.toggle('sc-cnav-cur', btn.dataset.pos === cur);
     });
+  }
+
+  function getOverlayContainerRect() {
+    if (!overlayEl || overlayEl.style.position !== 'absolute' || !overlayEl.parentElement || overlayEl.parentElement === document.body) {
+      return { left: 0, top: 0, width: window.innerWidth, height: window.innerHeight };
+    }
+
+    const rect = overlayEl.parentElement.getBoundingClientRect();
+    return {
+      left: rect.left,
+      top: rect.top,
+      width: overlayEl.parentElement.clientWidth || rect.width,
+      height: overlayEl.parentElement.clientHeight || rect.height
+    };
+  }
+
+  function inferCurrentCorner() {
+    if (!overlayEl) return null;
+    const rect = overlayEl.getBoundingClientRect();
+    const container = getOverlayContainerRect();
+    const left   = Math.abs(rect.left - container.left - SNAP_MARGIN);
+    const right  = Math.abs(container.left + container.width - rect.right - SNAP_MARGIN);
+    const top    = Math.abs(rect.top - container.top - SNAP_MARGIN);
+    const bottom = Math.abs(container.top + container.height - rect.bottom - SNAP_MARGIN);
+
+    const x = (left <= CORNER_TOLERANCE || right <= CORNER_TOLERANCE)
+      ? (left <= right ? 'left' : 'right')
+      : null;
+    const y = (top <= CORNER_TOLERANCE || bottom <= CORNER_TOLERANCE)
+      ? (top <= bottom ? 'top' : 'bottom')
+      : null;
+    return x && y ? `${y}-${x}` : null;
   }
 
   function moveToCorner(pos) {
@@ -352,7 +385,7 @@
     settings.position   = pos;
     settings.customLeft = -1;
     settings.customTop  = -1;
-    chrome.storage.sync.set({ position: pos, customLeft: -1, customTop: -1 });
+    scExt.setStorage('sync', { position: pos, customLeft: -1, customTop: -1 });
 
     // LAST: instantly snap to destination via corner CSS (no transition)
     overlayEl.style.transition = 'none';
@@ -425,10 +458,22 @@
     overlayEl.classList.remove('sc-dragging');
     document.removeEventListener('mousemove', onDrag, { capture: true });
     removeGuides();
+
+    const corner = inferCurrentCorner();
+    if (corner) {
+      settings.position = corner;
+      settings.customLeft = -1;
+      settings.customTop = -1;
+      scExt.setStorage('sync', { position: corner, customLeft: -1, customTop: -1 });
+      applyPosition();
+      updateCornerMarker();
+      return;
+    }
+
     const left = parseFloat(overlayEl.style.left) || 0;
     const top  = parseFloat(overlayEl.style.top)  || 0;
     settings.customLeft = left; settings.customTop = top;
-    chrome.storage.sync.set({ customLeft: left, customTop: top });
+    scExt.setStorage('sync', { customLeft: left, customTop: top });
     updateCornerMarker(); // drag = no corner active → all 4 buttons lit
   }
 
@@ -471,8 +516,10 @@
     document.addEventListener('fullscreenchange',       onFullscreenChange);
     document.addEventListener('webkitfullscreenchange', onFullscreenChange);
     window.addEventListener('resize', debounce(onFullscreenChange, 200));
+    document.addEventListener('mousemove', updateControlHover, { passive: true });
+    document.addEventListener('mouseleave', clearControlHover);
 
-    chrome.runtime.onMessage.addListener((msg, _s, sendResponse) => {
+    scExt.raw.runtime.onMessage.addListener((msg, _s, sendResponse) => {
       if (msg.type === 'GET_COORDS') {
         navigator.geolocation.getCurrentPosition(
           p => sendResponse({ lat: p.coords.latitude, lon: p.coords.longitude }),
@@ -483,7 +530,7 @@
       }
     });
 
-    chrome.storage.onChanged.addListener((changes) => {
+    scExt.raw.storage.onChanged.addListener((changes) => {
       for (const [k, { newValue }] of Object.entries(changes)) settings[k] = newValue;
       onSettingsChanged();
     });
@@ -507,6 +554,17 @@
   function debounce(fn, ms) {
     let t;
     return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
+  }
+
+  function updateControlHover(e) {
+    if (!overlayEl || !overlayEl.parentElement || !overlayEl.classList.contains('sc-visible')) return;
+    const rect = overlayEl.getBoundingClientRect();
+    const isInside = e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom;
+    overlayEl.classList.toggle('sc-control-hover', isInside);
+  }
+
+  function clearControlHover() {
+    if (overlayEl) overlayEl.classList.remove('sc-control-hover');
   }
 
   init();

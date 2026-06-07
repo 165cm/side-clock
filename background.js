@@ -1,5 +1,9 @@
 'use strict';
 
+if (typeof globalThis.scExt === 'undefined' && typeof importScripts === 'function') {
+  importScripts('extension-api.js');
+}
+
 const CACHE_KEY = 'sc_weather_cache';
 const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
 
@@ -12,12 +16,12 @@ const DEFAULT_SETTINGS = {
   enabled: true
 };
 
-chrome.runtime.onInstalled.addListener(async () => {
-  const existing = await chrome.storage.sync.get(null);
-  await chrome.storage.sync.set({ ...DEFAULT_SETTINGS, ...existing });
+scExt.raw.runtime.onInstalled.addListener(async () => {
+  const existing = await scExt.getStorage('sync', null);
+  await scExt.setStorage('sync', { ...DEFAULT_SETTINGS, ...existing });
 });
 
-chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+scExt.raw.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === 'GET_WEATHER') {
     handleWeatherRequest(sender.tab?.id).then(sendResponse).catch(() => sendResponse(null));
     return true; // async
@@ -26,7 +30,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
 async function handleWeatherRequest(tabId) {
   // 1. Check session cache
-  const cache = await chrome.storage.session.get(CACHE_KEY).catch(() => ({}));
+  const cache = await scExt.getStorage('session', CACHE_KEY).catch(() => ({}));
   const cached = cache[CACHE_KEY];
   if (cached && Date.now() - cached.fetchedAt < CACHE_TTL_MS) {
     return { weather: cached };
@@ -37,7 +41,7 @@ async function handleWeatherRequest(tabId) {
 
   let coords = null;
   try {
-    coords = await chrome.tabs.sendMessage(tabId, { type: 'GET_COORDS' });
+    coords = await scExt.sendTabMessage(tabId, { type: 'GET_COORDS' });
   } catch (_) {
     return { weather: null };
   }
@@ -67,7 +71,7 @@ async function handleWeatherRequest(tabId) {
   };
 
   // 4. Cache in session storage
-  await chrome.storage.session.set({ [CACHE_KEY]: weather }).catch(() => {});
+  await scExt.setStorage('session', { [CACHE_KEY]: weather }).catch(() => {});
 
   return { weather };
 }

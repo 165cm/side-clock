@@ -48,7 +48,6 @@
 }
 
 /* ── Grip handle ─────────────────────────────────────────────────────────── */
-/* Always semi-visible; parent pointer-events:none makes CSS :hover unreliable */
 .sc-grip {
   position: absolute;
   top: 5px;
@@ -57,12 +56,21 @@
   font-size: 11px;
   letter-spacing: 2px;
   color: rgba(255, 255, 255, 0.45);
-  opacity: 1;
+  opacity: 0;
+  visibility: hidden;
   cursor: grab;
-  pointer-events: auto;
-  transition: color 0.15s;
+  pointer-events: none;
+  transition: color 0.15s, opacity 0.15s, visibility 0s linear 0.15s;
   line-height: 1;
   padding: 4px 3px;
+}
+
+.sc-overlay.sc-control-hover .sc-grip,
+.sc-overlay.sc-dragging .sc-grip {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition-delay: 0s;
 }
 
 .sc-overlay.sc-dragging .sc-grip {
@@ -124,6 +132,16 @@
   z-index: 20;
   border-radius: 12px;    /* matches overlay — clips buttons to rounded rect */
   overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease, visibility 0s linear 0.15s;
+}
+
+.sc-overlay.sc-control-hover .sc-corner-nav,
+.sc-overlay.sc-dragging .sc-corner-nav {
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0s;
 }
 
 /* Base button: square positioned at corner, clipped to triangle by clip-path */
@@ -135,8 +153,13 @@
   border: none;
   padding: 0;
   cursor: pointer;
-  pointer-events: auto;
+  pointer-events: none;
   transition: filter 0.15s;
+}
+
+.sc-overlay.sc-control-hover .sc-cnav,
+.sc-overlay.sc-dragging .sc-cnav {
+  pointer-events: auto;
 }
 
 /* Inner dark triangle via ::before */

@@ -11,9 +11,12 @@ Chrome拡張機能 Side Clock の開発者向けドキュメントです。
 ```
 side-clock/
 ├── manifest.json          # MV3 マニフェスト
+├── extension-api.js       # Chrome / Firefox WebExtension API 互換ラッパー
 ├── content.js             # メインロジック（時計・天気・UI・ドラッグ）
 ├── content.css            # オーバーレイのスタイル
 ├── background.js          # Service Worker（天気キャッシュ・設定初期化）
+├── tools/
+│   └── build-firefox-package.js # Firefox 用 manifest/package 生成
 ├── popup/
 │   ├── popup.html         # 設定ポップアップUI
 │   ├── popup.js           # 設定の読み書き
@@ -46,7 +49,9 @@ SideClock() IIFE
 └── scheduleWeather()       # background へ GET_WEATHER メッセージ → renderWeather()
 ```
 
-### background.js — Service Worker
+### background.js — Background worker / script
+
+Chrome では `manifest.json` の `background.service_worker` として動作する。Firefox は MV3 でも `background.service_worker` ではなく `background.scripts` を使うため、`tools/build-firefox-package.js` で `dist/firefox/manifest.json` を生成する。
 
 ```
 onMessage(GET_WEATHER)
@@ -59,6 +64,18 @@ onMessage(GET_WEATHER)
 ---
 
 ## 重要な設計判断
+
+### Chrome / Firefox API 互換
+
+`extension-api.js` が `browser.*`（Firefox の Promise API）と `chrome.*`（Chrome の callback API）を吸収し、各スクリプトは `scExt` 経由で storage / tabs / runtime / i18n を呼び出す。
+
+```js
+const s = await scExt.getStorage('sync', DEFAULT_SETTINGS);
+await scExt.setStorage('sync', { enabled: true });
+const res = await scExt.sendRuntimeMessage({ type: 'GET_WEATHER' });
+```
+
+Chrome 用 manifest は content script に `extension-api.js` を先に注入し、service worker の `background.js` は `importScripts('extension-api.js')` で読み込む。Firefox 用 manifest は background scripts を `["extension-api.js", "background.js"]` に変換する。
 
 ### フルスクリーン検知の2モード
 
@@ -83,11 +100,11 @@ Canvas の `measureText()` は CSS の `letter-spacing` を考慮しないため
 ### pointer-events の設計
 
 - `.sc-overlay`: `pointer-events: none`（ページ操作を妨げない）
-- `.sc-grip`: `pointer-events: auto`（ドラッグ操作）
-- `.sc-cnav`: `pointer-events: auto`（角移動クリック）
+- `.sc-grip`: 通常は `pointer-events: none`、ホバー中/ドラッグ中のみ `auto`（ドラッグ操作）
+- `.sc-cnav`: 通常は `pointer-events: none`、ホバー中/ドラッグ中のみ `auto`（角移動クリック）
 - `.sc-corner-nav`: `pointer-events: none`（コンテナは透過、ボタンのみ受け取る）
 
-CSS `:hover` は `pointer-events: none` の親では発火しないため、常時表示 + ボタン自身の `:hover` で対応。
+CSS `:hover` は `pointer-events: none` の親では発火しないため、`document.mousemove` でオーバーレイ矩形内のカーソル位置を判定し、`.sc-control-hover` を付与する。
 
 ### SVGリングアニメーション
 
@@ -118,7 +135,7 @@ prog.setAttribute('stroke-dasharray', `${dash} ${perimeter + 20}`);
 
 ## ストレージスキーマ
 
-### `chrome.storage.sync`（設定）
+### `scExt.getStorage('sync')`（設定）
 
 | キー | 型 | デフォルト | 説明 |
 |---|---|---|---|
@@ -133,11 +150,11 @@ prog.setAttribute('stroke-dasharray', `${dash} ${perimeter + 20}`);
 | `customLeft` | number | `-1` | ドラッグ位置X（-1=未使用） |
 | `customTop` | number | `-1` | ドラッグ位置Y（-1=未使用） |
 
-### `chrome.storage.session`（天気キャッシュ）
+### `scExt.getStorage('session')`（天気キャッシュ）
 
 | キー | 内容 |
 |---|---|
-| `weatherCache` | `{ data, timestamp }` TTL 15分 |
+| `sc_weather_cache` | Open-Meteo の現在天気レスポンスを整形した値。TTL 15分 |
 
 ---
 
@@ -151,6 +168,16 @@ git clone https://github.com/165cm/side-clock.git
 2. **デベロッパーモード** をオン
 3. **「パッケージ化されていない拡張機能を読み込む」** → `side-clock/` を選択
 4. コード変更後は拡張機能カードの **🔄 ボタン** でリロード
+
+### Firefox
+
+```bash
+node tools/build-firefox-package.js
+```
+
+1. `about:debugging#/runtime/this-firefox` を開く
+2. **「一時的なアドオンを読み込む」** → `dist/firefox/manifest.json` を選択
+3. コード変更後は再度 `node tools/build-firefox-package.js` を実行して、Firefox 側でリロード
 
 ---
 
@@ -173,5 +200,5 @@ GET https://api.open-meteo.com/v1/forecast
 ポップアップの各要素は `data-i18n` 属性で自動置換される。
 
 ```js
-chrome.i18n.getMessage('appSub') // → ニュース風オーバーレイ / News-style overlay
+scExt.i18nGetMessage('appSub') // → ニュース風オーバーレイ / News-style overlay
 ```

@@ -14,23 +14,23 @@ let S = { ...DEFAULT_SETTINGS };
 
 function applyI18n() {
   document.querySelectorAll('[data-i18n]').forEach(el => {
-    const msg = chrome.i18n.getMessage(el.dataset.i18n);
+    const msg = scExt.i18nGetMessage(el.dataset.i18n);
     if (msg) el.textContent = msg;
   });
   document.querySelectorAll('[data-i18n-btn]').forEach(el => {
-    const msg = chrome.i18n.getMessage(el.dataset.i18nBtn);
+    const msg = scExt.i18nGetMessage(el.dataset.i18nBtn);
     if (msg) el.textContent = msg;
   });
 }
 
-chrome.storage.sync.get(DEFAULT_SETTINGS, (s) => {
+scExt.getStorage('sync', DEFAULT_SETTINGS).then((s) => {
   S = s;
   applyI18n();
   loadCurrentTab(() => render(s));
 });
 
 function loadCurrentTab(done) {
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+  scExt.queryTabs({ active: true, currentWindow: true }).then((tabs) => {
     const url = tabs && tabs[0] && tabs[0].url;
     try {
       const u = url ? new URL(url) : null;
@@ -76,7 +76,7 @@ function render(s) {
 
 function save(patch) {
   Object.assign(S, patch);
-  chrome.storage.sync.set(patch);
+  scExt.setStorage('sync', patch);
 }
 
 document.getElementById('enabled').addEventListener('change', (e) => {
