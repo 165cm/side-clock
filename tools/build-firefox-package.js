@@ -42,7 +42,8 @@ manifest.background = {
 manifest.browser_specific_settings = {
   gecko: {
     id: 'side-clock@165cm.github.io',
-    strict_min_version: '109.0'
+    // 115.0+: chrome.storage.session is required for the weather cache
+    strict_min_version: '115.0'
   }
 };
 
