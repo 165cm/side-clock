@@ -1,5 +1,9 @@
 'use strict';
 
+if (typeof globalThis.scExt === 'undefined' && typeof importScripts === 'function') {
+  importScripts('extension-api.js');
+}
+
 const CACHE_KEY = 'sc_weather_cache';
 const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
 
@@ -17,12 +21,12 @@ const DEFAULT_SETTINGS = {
   weatherPlace:   ''     // human-readable label for the registered place
 };
 
-chrome.runtime.onInstalled.addListener(async () => {
-  const existing = await chrome.storage.sync.get(null);
-  await chrome.storage.sync.set({ ...DEFAULT_SETTINGS, ...existing });
+scExt.raw.runtime.onInstalled.addListener(async () => {
+  const existing = await scExt.getStorage('sync', null);
+  await scExt.setStorage('sync', { ...DEFAULT_SETTINGS, ...existing });
 });
 
-chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+scExt.raw.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === 'GET_WEATHER') {
     handleWeatherRequest().then(sendResponse).catch(() => sendResponse(null));
     return true; // async
@@ -31,13 +35,13 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
 async function handleWeatherRequest() {
   // 1. Read the location registered by the user in settings (no geolocation)
-  const cfg = await chrome.storage.sync.get(['weatherLat', 'weatherLon']);
+  const cfg = await scExt.getStorage('sync', ['weatherLat', 'weatherLon']);
   const lat = cfg.weatherLat;
   const lon = cfg.weatherLon;
   if (lat == null || lon == null) return { weather: null }; // no location registered yet
 
   // 2. Check session cache (valid only for the same coordinates)
-  const cache = await chrome.storage.session.get(CACHE_KEY).catch(() => ({}));
+  const cache = await scExt.getStorage('session', CACHE_KEY).catch(() => ({}));
   const cached = cache[CACHE_KEY];
   if (cached && cached.lat === lat && cached.lon === lon &&
       Date.now() - cached.fetchedAt < CACHE_TTL_MS) {
@@ -69,7 +73,7 @@ async function handleWeatherRequest() {
   };
 
   // 4. Cache in session storage
-  await chrome.storage.session.set({ [CACHE_KEY]: weather }).catch(() => {});
+  await scExt.setStorage('session', { [CACHE_KEY]: weather }).catch(() => {});
 
   return { weather };
 }

@@ -19,16 +19,16 @@ let S = { ...DEFAULT_SETTINGS };
 
 function applyI18n() {
   document.querySelectorAll('[data-i18n]').forEach(el => {
-    const msg = chrome.i18n.getMessage(el.dataset.i18n);
+    const msg = scExt.i18nGetMessage(el.dataset.i18n);
     if (msg) el.textContent = msg;
   });
   document.querySelectorAll('[data-i18n-btn]').forEach(el => {
-    const msg = chrome.i18n.getMessage(el.dataset.i18nBtn);
+    const msg = scExt.i18nGetMessage(el.dataset.i18nBtn);
     if (msg) el.textContent = msg;
   });
 }
 
-chrome.storage.sync.get(DEFAULT_SETTINGS, (s) => {
+scExt.getStorage('sync', DEFAULT_SETTINGS).then((s) => {
   S = s;
   applyI18n();
   loadCurrentTab(() => { render(s); checkLiveTab(); });
@@ -40,18 +40,17 @@ chrome.storage.sync.get(DEFAULT_SETTINGS, (s) => {
 function checkLiveTab() {
   const notice = document.getElementById('reload-notice');
   if (!currentHost) { notice.style.display = 'none'; return; } // system page — no overlay
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+  scExt.queryTabs({ active: true, currentWindow: true }).then((tabs) => {
     const id = tabs && tabs[0] && tabs[0].id;
     if (id == null) { notice.style.display = 'none'; return; }
-    chrome.tabs.sendMessage(id, { type: 'PING' }, () => {
-      // lastError set => no content script on this page => reload needed
-      notice.style.display = chrome.runtime.lastError ? '' : 'none';
-    });
+    scExt.sendTabMessage(id, { type: 'PING' })
+      .then(() => { notice.style.display = 'none'; })
+      .catch(() => { notice.style.display = ''; }); // no content script => reload needed
   });
 }
 
 function loadCurrentTab(done) {
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+  scExt.queryTabs({ active: true, currentWindow: true }).then((tabs) => {
     const url = tabs && tabs[0] && tabs[0].url;
     try {
       const u = url ? new URL(url) : null;
@@ -103,7 +102,7 @@ function render(s) {
 
 function save(patch) {
   Object.assign(S, patch);
-  chrome.storage.sync.set(patch);
+  scExt.setStorage('sync', patch);
 }
 
 document.getElementById('enabled').addEventListener('change', (e) => {
@@ -138,9 +137,9 @@ function setStatus(text, kind) {
 // Show the registered place, or a call-to-action prompting the user to register.
 function renderWeatherStatus(s) {
   if (s.weatherLat != null && s.weatherLon != null && s.weatherPlace) {
-    setStatus('✓ ' + chrome.i18n.getMessage('weatherRegistered') + ' ' + s.weatherPlace, 'ok');
+    setStatus('✓ ' + scExt.i18nGetMessage('weatherRegistered') + ' ' + s.weatherPlace, 'ok');
   } else {
-    setStatus(chrome.i18n.getMessage('weatherCtaHint'), 'hint');
+    setStatus(scExt.i18nGetMessage('weatherCtaHint'), 'hint');
   }
 }
 
@@ -195,9 +194,9 @@ document.getElementById('weather-register').addEventListener('click', registerLo
 async function registerLocation() {
   const country = (document.getElementById('weather-country').value || '').trim();
   const postal  = getPostal(country);
-  if (!postal) { setStatus(chrome.i18n.getMessage('weatherError'), 'err'); return; }
+  if (!postal) { setStatus(scExt.i18nGetMessage('weatherError'), 'err'); return; }
 
-  setStatus(chrome.i18n.getMessage('weatherSearching'), 'hint');
+  setStatus(scExt.i18nGetMessage('weatherSearching'), 'hint');
 
   try {
     // Zippopotam.us resolves a country + postal code to coordinates — no API key.
@@ -223,10 +222,10 @@ async function registerLocation() {
       weatherLon:     lon,
       weatherPlace:   label,
     });
-    setStatus('✓ ' + chrome.i18n.getMessage('weatherRegistered') + ' ' + label, 'ok');
+    setStatus('✓ ' + scExt.i18nGetMessage('weatherRegistered') + ' ' + label, 'ok');
   } catch (_) {
     save({ weatherLat: null, weatherLon: null, weatherPlace: '' });
-    setStatus(chrome.i18n.getMessage('weatherError'), 'err');
+    setStatus(scExt.i18nGetMessage('weatherError'), 'err');
   }
 }
 
