@@ -1,6 +1,6 @@
 {
   "appName":        { "message": "Side Clock" },
-  "appDesc":        { "message": "フルスクリーン中に時計と天気をニュース番組風に表示" },
+  "appDesc":        { "message": "全画面動画に時計と天気を重ねて表示する集中用オーバーレイ" },
   "appSub":         { "message": "ニュース風オーバーレイ" },
   "reloadNotice":   { "message": "このページには設定が即時反映されません。変更を反映するにはページを再読み込みしてください。" },
   "sectionMode":    { "message": "表示モード" },

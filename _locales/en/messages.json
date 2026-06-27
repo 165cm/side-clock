@@ -1,6 +1,6 @@
 {
   "appName":        { "message": "Side Clock" },
-  "appDesc":        { "message": "Display clock and weather as a news-style overlay during fullscreen" },
+  "appDesc":        { "message": "Fullscreen clock and weather overlay for videos, focus, and ChromeOS" },
   "appSub":         { "message": "News-style overlay" },
   "reloadNotice":   { "message": "Settings can't apply live on this page. Reload the page to apply your changes." },
   "sectionMode":    { "message": "Display Mode" },

@@ -1,12 +1,44 @@
-# Developer Guide — Side Clock
+# Side Clock — Developer Guide
 
-[← README に戻る](./README.md)
+> ユーザー向け説明は [README.md](./README.md) を参照。
 
 Chrome拡張機能 Side Clock の開発者向けドキュメントです。
 
 ---
 
-## ファイル構成
+## 技術スタック
+
+| レイヤ | 採用技術 |
+|---|---|
+| 配布形式 | Chrome 拡張 Manifest V3 |
+| 言語 / UI | バニラ JavaScript / HTML / CSS |
+| ストレージ | `chrome.storage.sync` / `chrome.storage.session` |
+| 外部API | Open-Meteo / Zippopotam.us |
+| ビルド | なし（ソースをそのまま拡張機能として読み込み） |
+
+## セットアップ
+
+```bash
+git clone https://github.com/165cm/side-clock.git
+cd side-clock
+```
+
+1. `chrome://extensions` を開く
+2. **デベロッパーモード** をオン
+3. **「パッケージ化されていない拡張機能を読み込む」** → `side-clock/` を選択
+4. コード変更後は拡張機能カードの **🔄 ボタン** でリロード
+
+## 環境変数
+
+環境変数は不要です。天気APIも API キー不要の公開エンドポイントを使用します。
+
+## スクリプト
+
+| コマンド | 役割 |
+|---|---|
+| なし | ビルドツール不要。Chrome 拡張として直接読み込みます。 |
+
+## ディレクトリ構成
 
 ```
 side-clock/
@@ -164,16 +196,11 @@ prog.setAttribute('stroke-dasharray', `${dash} ${perimeter + 20}`);
 
 ---
 
-## ローカルで試す
+## デプロイ手順
 
-```bash
-git clone https://github.com/165cm/side-clock.git
-```
-
-1. `chrome://extensions` を開く
-2. **デベロッパーモード** をオン
-3. **「パッケージ化されていない拡張機能を読み込む」** → `side-clock/` を選択
-4. コード変更後は拡張機能カードの **🔄 ボタン** でリロード
+- Chrome ウェブストア向けには、ルート一式を審査用パッケージとして提出する。
+- Firefox 互換版は `dist/firefox/` 配下を配布対象にする。
+- `dist/` は生成物扱いのため、通常は Git 管理しない。
 
 ### Firefox
 
@@ -218,3 +245,14 @@ GET https://api.zippopotam.us/{country}/{postalcode}
 ```js
 scExt.i18nGetMessage('appSub') // → ニュース風オーバーレイ / News-style overlay
 ```
+
+---
+
+## AI 開発メモ
+
+- リポジトリ固有の作法は [.github/AGENTS.md](./.github/AGENTS.md) を参照。
+- 中央マニュアル: https://github.com/165cm/portfolio/tree/main/docs/standards
+
+## ライセンス
+
+README と同じく MIT。

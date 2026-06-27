@@ -9,6 +9,7 @@
 - [readme-template.md](https://github.com/165cm/portfolio/blob/main/docs/standards/readme-template.md) — README 規約
 - [developer-template.md](https://github.com/165cm/portfolio/blob/main/docs/standards/developer-template.md) — DEVELOPER 規約
 - [topics.md](https://github.com/165cm/portfolio/blob/main/docs/standards/topics.md) — Topics 規約
+- [about.md](https://github.com/165cm/portfolio/blob/main/docs/standards/about.md) — About 欄規約
 - [ops.md](https://github.com/165cm/portfolio/blob/main/docs/standards/ops.md) — その他運用ルール
 
 ## このリポジトリ固有の情報

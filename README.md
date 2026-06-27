@@ -7,6 +7,8 @@
 ![Manifest](https://img.shields.io/badge/Manifest-V3-4fc3f7)
 ![License](https://img.shields.io/badge/License-MIT-4fc3f7)
 
+![Side Clock の表示例](./webstore/screenshots/side-clock-01-time-at-a-glance.png)
+
 ---
 
 ## これは何？

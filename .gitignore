@@ -1,4 +1,8 @@
 .DS_Store
+.env
+.env.local
+node_modules/
+dist/
 *.bak
 content 2.js
 dist/
